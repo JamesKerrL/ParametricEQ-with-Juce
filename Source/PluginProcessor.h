@@ -15,6 +15,13 @@
 //==============================================================================
 /**
 */
+
+const std::string CUTOFF_PARAMETER_PREFIX = "cutoff";
+const std::string RESONANCE_PARAMETER_PREFIX = "resonance";
+const std::string GAIN_PARAMETER_PREFIX = "gain";
+const std::string FILTER_TYPE_PARAMETER_PREFIX = "filterType";
+const std::string FILTER_SLOPE_PARAMETER_PREFIX = "filterSlope";
+
 class ParametricEQAudioProcessor : public juce::AudioProcessor
 {
 public:
@@ -56,15 +63,14 @@ public:
 	void setStateInformation( const void* data, int sizeInBytes ) override;
 
 	juce::AudioProcessorValueTreeState GlobalStateTree;
-
-	FilterChain mFilter;
+	std::vector<FilterChain> mFilterBands = {};
 
 	void setFilterCallback( std::function<void()> filter_view_callback )
 	{
 		mFilterViewCallback = filter_view_callback;
 	}
 
-	void updateFilter();
+	void updateFilter( int index );
 
 private:
 	juce::AudioProcessorValueTreeState::ParameterLayout CreateParameterLayout();

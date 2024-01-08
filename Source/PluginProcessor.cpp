@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Constants.h"
 
 //==============================================================================
 ParametricEQAudioProcessor::ParametricEQAudioProcessor()
@@ -16,6 +17,10 @@ ParametricEQAudioProcessor::ParametricEQAudioProcessor()
 		.withOutput( "Output", juce::AudioChannelSet::stereo(), true )
 	), GlobalStateTree( *this, &mUndoManager, "PARAMETERS", ParametricEQAudioProcessor::CreateParameterLayout() )
 {
+	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+	{
+		mFilterBands.push_back( FilterChain{} );
+	}
 }
 
 ParametricEQAudioProcessor::~ParametricEQAudioProcessor()
@@ -87,8 +92,13 @@ void ParametricEQAudioProcessor::changeProgramName( int index, const juce::Strin
 //==============================================================================
 void ParametricEQAudioProcessor::prepareToPlay( double sampleRate, int samplesPerBlock )
 {
-	mFilter.SetSampleRate( sampleRate );
-	updateFilter();
+	int index = 0;
+	for (auto& filter : mFilterBands)
+	{
+		filter.SetSampleRate( sampleRate );
+		updateFilter( index );
+		index++;
+	}
 }
 
 void ParametricEQAudioProcessor::releaseResources()
@@ -138,7 +148,10 @@ void ParametricEQAudioProcessor::processBlock( juce::AudioBuffer<float>& buffer,
 	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
 		buffer.clear( i, 0, buffer.getNumSamples() );
 
-	mFilter.process( buffer );
+	for (auto& filter : mFilterBands)
+	{
+		filter.process( buffer );
+	}
 }
 
 //==============================================================================
@@ -170,38 +183,53 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 ParametricEQAudioProcessor::CreateParameterLayout()
 {
 	juce::AudioProcessorValueTreeState::ParameterLayout layout;
-	auto cutoff = std::make_unique<juce::AudioParameterFloat>( "cutoff",
-		"Cutoff",
-		FrequencyRange( 20.0f, 20000.0f, 0.25f ),
-		1000.0f );
+	for (int index = 0; index < Constants::NUMBER_OF_BANDS; index++)
+	{
+		auto cutoff = std::make_unique<juce::AudioParameterFloat>( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( index ),
+			"Cutoff Band " + std::to_string( index ),
+			FrequencyRange( 20.0f, 20000.0f, 0.25f ),
+			1000.0f );
 
-	auto resonance = std::make_unique<juce::AudioParameterFloat>( "resonance",
-		"Resonance",
-		0.2,
-		5,
-		0.707f );
+		auto resonance = std::make_unique<juce::AudioParameterFloat>( RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( index ),
+			"Resonance Band " + std::to_string( index ),
+			0.2,
+			5,
+			0.707f );
 
-	auto gain = std::make_unique<juce::AudioParameterFloat>( "gain",
-		"Gain",
-		-24.f,
-		24.f,
-		0.f );
+		auto gain = std::make_unique<juce::AudioParameterFloat>( GAIN_PARAMETER_PREFIX + "_" + std::to_string( index ),
+			"Gain Band " + std::to_string( index ),
+			-24.f,
+			24.f,
+			0.f );
 
-	auto filterType = std::make_unique<juce::AudioParameterChoice>( "filterType",
-		"FilterType",
-		juce::StringArray{ "LPF", "HPF", "NOTCH", "PEAK" },
+		auto filterType = std::make_unique<juce::AudioParameterChoice>( FILTER_TYPE_PARAMETER_PREFIX + "_" + std::to_string( index ),
+			"FilterType Band " + std::to_string( index ),
+			juce::StringArray{ "LPF", "HPF", "NOTCH", "PEAK" },
+			0 );
+
+		auto filterSlope = std::make_unique<juce::AudioParameterChoice>( FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( index ),
+			"FilterSlope Band " + std::to_string( index ),
+			juce::StringArray{ "12db/OCT", "24db/OCT", "36db/OCT", "48db/OCT" },
+			0 );
+
+		layout.add( std::move( cutoff ) );
+		layout.add( std::move( resonance ) );
+		layout.add( std::move( gain ) );
+		layout.add( std::move( filterType ) );
+		layout.add( std::move( filterSlope ) );
+	}
+
+	juce::StringArray band_strings;
+	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+	{
+		band_strings.add(std::to_string( i ));
+	}
+	auto selectedBand = std::make_unique<juce::AudioParameterChoice>( "selectedBand",
+		"SelectedBand",
+		band_strings,
 		0 );
 
-	auto filterSlope = std::make_unique<juce::AudioParameterChoice>( "filterSlope",
-		"FilterSlope",
-		juce::StringArray{ "12db/OCT", "24db/OCT", "36db/OCT", "48db/OCT" },
-		0 );
-
-	layout.add( std::move( cutoff ) );
-	layout.add( std::move( resonance ) );
-	layout.add( std::move( gain ) );
-	layout.add( std::move( filterType ) );
-	layout.add( std::move( filterSlope ) );
+	layout.add( std::move( selectedBand ) );
 
 	return layout;
 }
@@ -213,21 +241,22 @@ ParametricEQAudioProcessor::FrequencyRange( float min, float max, float interval
 }
 
 void
-ParametricEQAudioProcessor::updateFilter()
+ParametricEQAudioProcessor::updateFilter( int index )
 {
-	auto cutoff_parameter = GlobalStateTree.getRawParameterValue( "cutoff" );
+	auto cutoff_parameter = GlobalStateTree.getRawParameterValue( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string(index) );
 	float cutoff = cutoff_parameter->load();
-	auto resonance_parameter = GlobalStateTree.getRawParameterValue( "resonance" );
+	auto resonance_parameter = GlobalStateTree.getRawParameterValue( RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( index ) );
 	float resonance = resonance_parameter->load();
-	auto gain_parameter = GlobalStateTree.getRawParameterValue( "gain" );
+	auto gain_parameter = GlobalStateTree.getRawParameterValue( GAIN_PARAMETER_PREFIX + "_" + std::to_string( index ) );
 	float gain = gain_parameter->load();
-	auto filter_type_parameter = GlobalStateTree.getRawParameterValue( "filterType" );
+	auto filter_type_parameter = GlobalStateTree.getRawParameterValue( FILTER_TYPE_PARAMETER_PREFIX + "_" + std::to_string( index ) );
 	float filter_type = filter_type_parameter->load();
 
-	auto order = GlobalStateTree.getRawParameterValue( "filterSlope" );
+	auto order = GlobalStateTree.getRawParameterValue( FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( index ) );
 	int filter_order = order->load();
-	mFilter.setFilterOrder( filter_order + 1 );
-	mFilter.setParameters( cutoff, resonance, gain, ToEnum( filter_type ) );
+
+	mFilterBands[index].setFilterOrder( filter_order + 1 );
+	mFilterBands[index].setParameters( cutoff, resonance, gain, ToEnum( filter_type ) );
 	mFilterViewCallback();
 }
 
