@@ -13,6 +13,7 @@
 #include "FilterResponseCurveComponent.h"
 #include "AnalysisComponent.h"
 #include "BandControlComponent.h"
+#include "SpectrumComponent.h"
 
 //==============================================================================
 /**
@@ -33,15 +34,14 @@ private:
 	ParametricEQAudioProcessor& audioProcessor;
 
 	void SetVisibleIndex( int index );
-	AnalysisComponent mAnalysisView;
+	std::unique_ptr <AnalysisComponent> mAnalysisView;
 	juce::ComboBox mFilterTypeComboBox;
 	juce::ComboBox mSlopeComboBox;
+	std::vector<std::unique_ptr<BandControlComponent>> mBandControls = {};
 	juce::ComboBox mSelectedBandComboBox;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> mComboBoxAtt;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> mSlopeComboBoxAtt;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> mSelectedBandAtt;
-
-	std::vector<std::unique_ptr<BandControlComponent>> mBandControls = {};
 
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR( ParametricEQAudioProcessorEditor )

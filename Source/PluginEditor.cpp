@@ -16,7 +16,7 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 {
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
-
+	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.mFifo );
 
 	mSelectedBandAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( audioProcessor.GlobalStateTree, "selectedBand", mSelectedBandComboBox );
 	auto* parameter = audioProcessor.GlobalStateTree.getParameter( "selectedBand" );
@@ -36,29 +36,31 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 		mBandControls.push_back( std::move(local) );
 		addAndMakeVisible( *mBandControls.back() );
 	}
+
 	SetVisibleIndex( 0 );
-
-	addAndMakeVisible( mAnalysisView );
-
 	addAndMakeVisible( mSelectedBandComboBox );
+	addAndMakeVisible( *mAnalysisView );
 
 	setSize( 800, 300 );
 
 	std::function<void()> func = [&]()
 	{
-		std::vector<float> magnitudes;
-		int analysis_area_width = mAnalysisView.getAnalysisAreaBounds().getWidth();
-		for (int i = 0; i < analysis_area_width; i++)
+		if (mAnalysisView)
 		{
-			float frq = juce::mapToLog10( static_cast<double>(i) / static_cast<double>(analysis_area_width), 20.0, 20000.0 );
-			float value = 1.0f;
-			for (auto& filter : audioProcessor.mFilterBands)
+			std::vector<float> magnitudes;
+			int analysis_area_width = mAnalysisView->getAnalysisAreaBounds().getWidth();
+			for (int i = 0; i < analysis_area_width; i++)
 			{
-				value *= filter.getMagnitudeAtFrequency( frq );
+				float frq = juce::mapToLog10( static_cast<double>(i) / static_cast<double>(analysis_area_width), 20.0, 20000.0 );
+				float value = 1.0f;
+				for (auto& filter : audioProcessor.mFilterBands)
+				{
+					value *= filter.getMagnitudeAtFrequency( frq );
+				}
+				magnitudes.push_back( juce::Decibels::gainToDecibels( value ) );
 			}
-			magnitudes.push_back( juce::Decibels::gainToDecibels( value ) );
+			mAnalysisView->SetMagnitudes( magnitudes );
 		}
-		mAnalysisView.SetMagnitudes( magnitudes );
 	};
 	audioProcessor.setFilterCallback( func );
 	func();
@@ -75,17 +77,15 @@ void ParametricEQAudioProcessorEditor::paint( juce::Graphics& g )
 	g.fillAll( getLookAndFeel().findColour( juce::ResizableWindow::backgroundColourId ) );
 
 	g.setColour( juce::Colours::white );
-	g.setFont( 15.0f );
-	g.drawFittedText( "Hello dwwWorld!", getLocalBounds(), juce::Justification::centred, 1 );
 }
 
 void ParametricEQAudioProcessorEditor::resized()
 {
-	mAnalysisView.setBounds( 10, 10, 500, 200 );
+	mAnalysisView->setBounds( 10, 10, 500, 200 );
 	mSelectedBandComboBox.setBounds( 600, 10, 50, 50 );
 	for (int band = 0; band < Constants::NUMBER_OF_BANDS; band++)
 	{
-		mBandControls[band]->setBounds( 10, mAnalysisView.getBottom(), getWidth() - 20, getHeight() - mAnalysisView.getBottom() );
+		mBandControls[band]->setBounds( 10, mAnalysisView->getBottom(), getWidth() - 20, getHeight() - mAnalysisView->getBottom() );
 	}
 }
 

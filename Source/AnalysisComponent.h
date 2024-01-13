@@ -6,12 +6,15 @@
 
 #include <cmath>
 #include "FilterResponseCurveComponent.h"
+#include "SpectrumComponent.h"
 
 class AnalysisComponent : public juce::Component
 {
 public:
-	AnalysisComponent()
+	AnalysisComponent( FifoBuffer& fifo_buffer )
 	{
+		mSpectrum = std::make_unique<SpectrumComponent>( fifo_buffer );
+		addAndMakeVisible( *mSpectrum );
 		addAndMakeVisible( mResponseCurveView );
 	}
 
@@ -63,11 +66,14 @@ public:
 	void resized() override
 	{
 		auto local_bounds = getLocalBounds();
-		mResponseCurveView.setBounds( local_bounds.getX(), local_bounds.getY(), local_bounds.getWidth() - 30, local_bounds.getHeight() - 10 );
+		auto view_bounds = juce::Rectangle<int>{ local_bounds.getX(), local_bounds.getY(), local_bounds.getWidth() - 30, local_bounds.getHeight() - 10 };
+		mSpectrum->setBounds( view_bounds );
+		mResponseCurveView.setBounds( view_bounds );
 	}
 private:
 	std::vector<float> mMagnitudes;
 	FilterResponseCurveComponent mResponseCurveView;
+	std::unique_ptr<SpectrumComponent> mSpectrum;
 	const double MAX_GAIN_IN_DB = 24.0;
 	const double MIN_GAIN_IN_DB = -24.0;
 };

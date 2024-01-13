@@ -92,6 +92,7 @@ void ParametricEQAudioProcessor::changeProgramName( int index, const juce::Strin
 //==============================================================================
 void ParametricEQAudioProcessor::prepareToPlay( double sampleRate, int samplesPerBlock )
 {
+	mMonoBuffer.setSize( 1, samplesPerBlock );
 	int index = 0;
 	for (auto& filter : mFilterBands)
 	{
@@ -147,6 +148,16 @@ void ParametricEQAudioProcessor::processBlock( juce::AudioBuffer<float>& buffer,
 	// this code if your algorithm always overwrites all the output channels.
 	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
 		buffer.clear( i, 0, buffer.getNumSamples() );
+
+	const float* left_ptr = buffer.getReadPointer( 0 );
+	const float* right_ptr = buffer.getReadPointer( 1 );
+	float* mono_ptr = mMonoBuffer.getWritePointer(0);
+	for (int i = 0; i < buffer.getNumSamples(); i++)
+	{
+		mono_ptr[i] = (left_ptr[i] + right_ptr[i]) / 2;
+	}
+
+	mFifo.WriteTo( mono_ptr, buffer.getNumSamples() );
 
 	for (auto& filter : mFilterBands)
 	{
@@ -205,7 +216,7 @@ ParametricEQAudioProcessor::CreateParameterLayout()
 		auto filterType = std::make_unique<juce::AudioParameterChoice>( FILTER_TYPE_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"FilterType Band " + std::to_string( index ),
 			juce::StringArray{ "LPF", "HPF", "NOTCH", "PEAK" },
-			0 );
+			3 );
 
 		auto filterSlope = std::make_unique<juce::AudioParameterChoice>( FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"FilterSlope Band " + std::to_string( index ),

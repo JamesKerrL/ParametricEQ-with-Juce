@@ -22,9 +22,6 @@ public:
 
 	void paint( juce::Graphics& g ) override
 	{
-		g.setColour( juce::Colours::black );
-		g.fillRect( getLocalBounds() );
-
 		float bot = static_cast<float>(getHeight());
 		float top = static_cast<float>(getY());
 
@@ -34,7 +31,7 @@ public:
 		for (int i = 1; i < mMagnitudes.size(); i++)
 		{
 			float y = juce::jmap( mMagnitudes[i], -24.0f, 24.0f, bot, top );
-			curve.lineTo( 0 + i, y );
+			curve.lineTo( i, y );
 		}
 		g.setColour( juce::Colours::white );
 		g.strokePath( curve, juce::PathStrokeType( 2.0f ) );

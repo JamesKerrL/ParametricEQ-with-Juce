@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "BiquadFilter.h"
 #include "FilterChain.h"
+#include "FifoBuffer.h"
 
 //==============================================================================
 /**
@@ -72,12 +73,16 @@ public:
 
 	void updateFilter( int index );
 
+	FifoBuffer mFifo;
+
 private:
 	juce::AudioProcessorValueTreeState::ParameterLayout CreateParameterLayout();
 
 	juce::UndoManager mUndoManager;
 	std::function<void()> mFilterViewCallback = []() {};
 	BiquadFilter::FilterType ToEnum( float filter_type );
+
+	juce::AudioBuffer<float> mMonoBuffer;
 
 	juce::NormalisableRange<float> FrequencyRange( float min, float max, float interval );
 	//==============================================================================
