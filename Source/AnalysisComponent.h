@@ -11,9 +11,9 @@
 class AnalysisComponent : public juce::Component
 {
 public:
-	AnalysisComponent( FifoBuffer& fifo_buffer )
+	AnalysisComponent( FifoBuffer& fifo_buffer, double sample_rate )
 	{
-		mSpectrum = std::make_unique<SpectrumComponent>( fifo_buffer );
+		mSpectrum = std::make_unique<SpectrumComponent>( fifo_buffer, sample_rate );
 		addAndMakeVisible( *mSpectrum );
 		addAndMakeVisible( mResponseCurveView );
 	}
@@ -36,15 +36,24 @@ public:
 
 	void DrawFrequencyMarkers( juce::Graphics& g )
 	{
+		std::vector<float> frequencies_of_interest = { 20, 30, 40, 60, 80, 100, 200, 300, 400, 600, 800, 1000, 2000, 3000, 4000, 6000, 8000, 10000, 20000 };
 		g.setColour( juce::Colours::white );
 		g.setFont( 10 );
-		int step = getWidth() / 10;
-		for (int freq_label = 0; freq_label < 10; freq_label++)
+		int idx = 0;
+		for (auto freq : frequencies_of_interest)
 		{
-			int freq = juce::mapToLog10( static_cast<double>(freq_label) / 10.0, 20.0, 20000.0 );
 			juce::String str;
-			str << freq;
-			g.drawFittedText( str, { step * freq_label,getHeight() - 10 ,20,10 }, juce::Justification::centred, 1 );
+			if (freq > 1000)
+			{
+				str << (freq / 1000) << " kHz";
+			}
+			else
+			{
+				str << freq;
+			}
+			int x = juce::mapFromLog10( freq, 20.0f, 20000.0f ) * getWidth();
+			g.drawFittedText( str, { x, getHeight() - 10 ,20,10 }, juce::Justification::centred, 1 );
+			idx++;
 		}
 	}
 

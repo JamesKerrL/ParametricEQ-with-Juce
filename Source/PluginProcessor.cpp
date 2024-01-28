@@ -92,6 +92,7 @@ void ParametricEQAudioProcessor::changeProgramName( int index, const juce::Strin
 //==============================================================================
 void ParametricEQAudioProcessor::prepareToPlay( double sampleRate, int samplesPerBlock )
 {
+	mSampleRate = sampleRate;
 	mMonoBuffer.setSize( 1, samplesPerBlock );
 	int index = 0;
 	for (auto& filter : mFilterBands)

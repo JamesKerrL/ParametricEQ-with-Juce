@@ -16,7 +16,7 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 {
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
-	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.mFifo );
+	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.mFifo, audioProcessor.mSampleRate );
 
 	mSelectedBandAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( audioProcessor.GlobalStateTree, "selectedBand", mSelectedBandComboBox );
 	auto* parameter = audioProcessor.GlobalStateTree.getParameter( "selectedBand" );

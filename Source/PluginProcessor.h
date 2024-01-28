@@ -74,6 +74,7 @@ public:
 	void updateFilter( int index );
 
 	FifoBuffer mFifo;
+	double mSampleRate;
 
 private:
 	juce::AudioProcessorValueTreeState::ParameterLayout CreateParameterLayout();
