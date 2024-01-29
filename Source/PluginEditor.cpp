@@ -18,16 +18,19 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 	// editor's size to whatever you need it to be.
 	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.mFifo, audioProcessor.mSampleRate );
 
-	mSelectedBandAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( audioProcessor.GlobalStateTree, "selectedBand", mSelectedBandComboBox );
-	auto* parameter = audioProcessor.GlobalStateTree.getParameter( "selectedBand" );
-	mSelectedBandComboBox.addItemList( parameter->getAllValueStrings(), 1 );
-
-	mSelectedBandComboBox.onChange = [&]()
+	// Band selection
+	mBandSelector = std::make_unique<BandSelectionComponent>( Constants::NUMBER_OF_BANDS, 
+		[&]( int index )
 	{
 		auto selected_band_parameter = audioProcessor.GlobalStateTree.getRawParameterValue( "selectedBand" );
-		int selected_band = selected_band_parameter->load();
-		SetVisibleIndex( selected_band );
-	};
+		selected_band_parameter->store( index );
+		SetVisibleIndex( index );
+	} );
+
+	auto selected_band_parameter = audioProcessor.GlobalStateTree.getRawParameterValue( "selectedBand" );
+	mBandSelector->SetSelectedButton( selected_band_parameter->load() );
+	addAndMakeVisible( *mBandSelector );
+
 
 	for (int band = 0; band < Constants::NUMBER_OF_BANDS; band++)
 	{
@@ -36,12 +39,11 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 		mBandControls.push_back( std::move(local) );
 		addAndMakeVisible( *mBandControls.back() );
 	}
-
 	SetVisibleIndex( 0 );
-	addAndMakeVisible( mSelectedBandComboBox );
+
 	addAndMakeVisible( *mAnalysisView );
 
-	setSize( 800, 300 );
+	setSize( 800, 350 );
 
 	std::function<void()> func = [&]()
 	{
@@ -81,11 +83,11 @@ void ParametricEQAudioProcessorEditor::paint( juce::Graphics& g )
 
 void ParametricEQAudioProcessorEditor::resized()
 {
-	mAnalysisView->setBounds( 10, 10, 500, 200 );
-	mSelectedBandComboBox.setBounds( 600, 10, 50, 50 );
+	mAnalysisView->setBounds( 10, 10, getWidth() - 10, 200 );
+	mBandSelector->setBounds( 10, mAnalysisView->getBottom() + 5, getWidth() - 20, 40 );
 	for (int band = 0; band < Constants::NUMBER_OF_BANDS; band++)
 	{
-		mBandControls[band]->setBounds( 10, mAnalysisView->getBottom(), getWidth() - 20, getHeight() - mAnalysisView->getBottom() );
+		mBandControls[band]->setBounds( 10, mBandSelector->getBottom() + 5, getWidth() - 20, getHeight() - (mBandSelector->getBottom() +5) );
 	}
 }
 

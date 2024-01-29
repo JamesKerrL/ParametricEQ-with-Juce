@@ -7,6 +7,8 @@
 #include <cmath>
 #include "FilterResponseCurveComponent.h"
 #include "SpectrumComponent.h"
+#include "FilterControllersComponent.h"
+#include "Constants.h"
 
 class AnalysisComponent : public juce::Component
 {
@@ -14,7 +16,9 @@ public:
 	AnalysisComponent( FifoBuffer& fifo_buffer, double sample_rate )
 	{
 		mSpectrum = std::make_unique<SpectrumComponent>( fifo_buffer, sample_rate );
+		mFilterControlsView = std::make_unique<FilterControllersComponent>( Constants::NUMBER_OF_BANDS );
 		addAndMakeVisible( *mSpectrum );
+		addAndMakeVisible( *mFilterControlsView );
 		addAndMakeVisible( mResponseCurveView );
 	}
 
@@ -78,11 +82,14 @@ public:
 		auto view_bounds = juce::Rectangle<int>{ local_bounds.getX(), local_bounds.getY(), local_bounds.getWidth() - 30, local_bounds.getHeight() - 10 };
 		mSpectrum->setBounds( view_bounds );
 		mResponseCurveView.setBounds( view_bounds );
+		mFilterControlsView->setBounds( view_bounds );
 	}
+
 private:
 	std::vector<float> mMagnitudes;
 	FilterResponseCurveComponent mResponseCurveView;
 	std::unique_ptr<SpectrumComponent> mSpectrum;
+	std::unique_ptr<FilterControllersComponent> mFilterControlsView;
 	const double MAX_GAIN_IN_DB = 24.0;
 	const double MIN_GAIN_IN_DB = -24.0;
 };

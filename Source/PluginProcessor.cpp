@@ -249,7 +249,7 @@ ParametricEQAudioProcessor::CreateParameterLayout()
 juce::NormalisableRange<float>
 ParametricEQAudioProcessor::FrequencyRange( float min, float max, float interval )
 {
-	return { min, max, interval, 1.f / std::log2( 1.f + std::sqrt( max / min ) ) };
+	return { min, max, interval, 1.f / std::log2( 1.f + std::sqrt( max / min ) )};
 }
 
 void

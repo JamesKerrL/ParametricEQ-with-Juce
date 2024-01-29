@@ -14,6 +14,7 @@
 #include "AnalysisComponent.h"
 #include "BandControlComponent.h"
 #include "SpectrumComponent.h"
+#include "BandSelectionComponent.h"
 
 //==============================================================================
 /**
@@ -35,13 +36,12 @@ private:
 
 	void SetVisibleIndex( int index );
 	std::unique_ptr <AnalysisComponent> mAnalysisView;
+	std::unique_ptr<BandSelectionComponent> mBandSelector;
 	juce::ComboBox mFilterTypeComboBox;
 	juce::ComboBox mSlopeComboBox;
 	std::vector<std::unique_ptr<BandControlComponent>> mBandControls = {};
-	juce::ComboBox mSelectedBandComboBox;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> mComboBoxAtt;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> mSlopeComboBoxAtt;
-	std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> mSelectedBandAtt;
 
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR( ParametricEQAudioProcessorEditor )
