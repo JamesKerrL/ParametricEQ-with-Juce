@@ -19,7 +19,8 @@ ParametricEQAudioProcessor::ParametricEQAudioProcessor()
 {
 	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
 	{
-		mFilterBands.push_back( FilterChain{} );
+		auto filter_ptr = std::make_unique<FilterChain>();
+		mFilterBands.push_back( std::move( filter_ptr ) );
 	}
 }
 
@@ -97,7 +98,7 @@ void ParametricEQAudioProcessor::prepareToPlay( double sampleRate, int samplesPe
 	int index = 0;
 	for (auto& filter : mFilterBands)
 	{
-		filter.SetSampleRate( sampleRate );
+		filter->SetSampleRate( sampleRate );
 		updateFilter( index );
 		index++;
 	}
@@ -162,7 +163,7 @@ void ParametricEQAudioProcessor::processBlock( juce::AudioBuffer<float>& buffer,
 
 	for (auto& filter : mFilterBands)
 	{
-		filter.process( buffer );
+		filter->process( buffer );
 	}
 }
 
@@ -267,8 +268,8 @@ ParametricEQAudioProcessor::updateFilter( int index )
 	auto order = GlobalStateTree.getRawParameterValue( FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( index ) );
 	int filter_order = order->load();
 
-	mFilterBands[index].setFilterOrder( filter_order + 1 );
-	mFilterBands[index].setParameters( cutoff, resonance, gain, ToEnum( filter_type ) );
+	mFilterBands[index]->setFilterOrder( filter_order + 1 );
+	mFilterBands[index]->setParameters( cutoff, resonance, gain, ToEnum( filter_type ) );
 	mFilterViewCallback();
 }
 

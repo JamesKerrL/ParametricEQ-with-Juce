@@ -53,7 +53,7 @@ public:
 	}
 
 private:
-	static constexpr int BUFFER_SIZE = 1024 * 2;
+	static constexpr int BUFFER_SIZE = 2048 * 2;
 	std::unique_ptr<juce::AbstractFifo> mAbstractFifo;
 	juce::Array<float> mStorage;
 };

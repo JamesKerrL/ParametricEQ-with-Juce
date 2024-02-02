@@ -64,7 +64,7 @@ public:
 	void setStateInformation( const void* data, int sizeInBytes ) override;
 
 	juce::AudioProcessorValueTreeState GlobalStateTree;
-	std::vector<FilterChain> mFilterBands = {};
+	std::vector<std::unique_ptr<FilterChain>> mFilterBands = {};
 
 	void setFilterCallback( std::function<void()> filter_view_callback )
 	{

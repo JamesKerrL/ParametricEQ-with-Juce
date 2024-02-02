@@ -57,7 +57,7 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 				float value = 1.0f;
 				for (auto& filter : audioProcessor.mFilterBands)
 				{
-					value *= filter.getMagnitudeAtFrequency( frq );
+					value *= filter->getMagnitudeAtFrequency( frq );
 				}
 				magnitudes.push_back( juce::Decibels::gainToDecibels( value ) );
 			}

@@ -17,9 +17,49 @@ public:
 		PEAK
 	};
 
-	void setParameters( float frequency, float resonance, float gain_in_db,  FilterType type )
+	void SetSampleRate( double sampleRate ) 
+	{
+		mSampleRate = sampleRate;
+	}
+	
+	void process( juce::AudioBuffer<float>& buffer )
+	{
+
+		for ( int channel = 0; channel < buffer.getNumChannels(); ++channel )
+		{
+			auto* channel_ptr = buffer.getWritePointer( channel );
+			ChannelState& state = states[channel];
+			for (int sample = 0; sample < buffer.getNumSamples(); sample++)
+			{
+				float yn = (channel_ptr[sample] * mAudioThreadFilterCoefficients.b0) +
+					(state.xn_1 * mAudioThreadFilterCoefficients.b1) + (state.xn_2 * mAudioThreadFilterCoefficients.b2) -
+					(state.yn_1 *mAudioThreadFilterCoefficients.a1) - (state.yn_2 *mAudioThreadFilterCoefficients.a2);
+
+				float xn = channel_ptr[sample];
+				channel_ptr[sample] = yn;
+				state.xn_2 = state.xn_1;
+				state.yn_2 = state.yn_1;
+				state.xn_1 = xn;
+				state.yn_1 = yn;
+			}
+		}
+	}
+
+	// pass frequency into transfer function
+	float getMagnitudeAtFrequency( double frequency )
+	{
+		auto w = 2.0f * PI * frequency / mSampleRate;
+		std::complex<float> z( cos( w ), sin( w ) ); // e^jw
+		auto den = 1.0f + mMainThreadFilterCoefficients.a1 * z + mMainThreadFilterCoefficients.a2  * z * z;
+		auto num = mMainThreadFilterCoefficients.b0 + mMainThreadFilterCoefficients.b1 * z + mMainThreadFilterCoefficients.b2 * z * z;
+		return std::abs( (num / den) );
+	}
+
+	/// ONLY call from audio thread
+	void RecalculateCoefficients( bool main_thread, float frequency, float resonance, float gain_in_db, FilterType type)
 	{
 		FilterCoefficients new_coefficients;
+
 		float A = std::sqrt( juce::Decibels::decibelsToGain( gain_in_db ) );
 		auto Q = resonance;
 		float wo = 2 * PI * frequency / mSampleRate;
@@ -70,7 +110,7 @@ public:
 		}
 		case FilterType::PEAK:
 		{
-			new_coefficients.a0 = 1 + (alpha/A);
+			new_coefficients.a0 = 1 + (alpha / A);
 			new_coefficients.a1 = -2 * cosW;
 			new_coefficients.a2 = 1 - (alpha / A);
 			new_coefficients.b0 = 1 + (alpha * A);
@@ -78,51 +118,20 @@ public:
 			new_coefficients.a2 /= new_coefficients.a0;
 			new_coefficients.b0 /= new_coefficients.a0;
 			new_coefficients.b1 = -2 * cosW / new_coefficients.a0;
-			new_coefficients.b2 = (1 - (alpha * A))/ new_coefficients.a0;
+			new_coefficients.b2 = (1 - (alpha * A)) / new_coefficients.a0;
 			break;
 		}
 
 		}
 
-
-		mFilterCoefficients = new_coefficients;
-	}
-
-	void SetSampleRate( double sampleRate ) 
-	{
-		mSampleRate = sampleRate;
-	}
-	
-	void process( juce::AudioBuffer<float>& buffer )
-	{
-		for ( int channel = 0; channel < buffer.getNumChannels(); ++channel )
+		if (main_thread)
 		{
-			auto* channel_ptr = buffer.getWritePointer( channel );
-			ChannelState& state = states[channel];
-			for (int sample = 0; sample < buffer.getNumSamples(); sample++)
-			{
-				float yn = (channel_ptr[sample] * mFilterCoefficients.b0) +
-					(state.xn_1 * mFilterCoefficients.b1) + (state.xn_2 * mFilterCoefficients.b2) -
-					(state.yn_1 *mFilterCoefficients.a1) - (state.yn_2 *mFilterCoefficients.a2);
-
-				float xn = channel_ptr[sample];
-				channel_ptr[sample] = yn;
-				state.xn_2 = state.xn_1;
-				state.yn_2 = state.yn_1;
-				state.xn_1 = xn;
-				state.yn_1 = yn;
-			}
+			mMainThreadFilterCoefficients = new_coefficients;
 		}
-	}
-
-	// pass frequency into transfer function
-	float getMagnitudeAtFrequency( double frequency )
-	{
-		auto w = 2.0f * PI * frequency / mSampleRate;
-		std::complex<float> z( cos( w ), sin( w ) ); // e^jw
-		auto den = 1.0f + mFilterCoefficients.a1 * z + mFilterCoefficients.a2  * z * z;
-		auto num = mFilterCoefficients.b0 + mFilterCoefficients.b1 * z + mFilterCoefficients.b2 * z * z;
-		return std::abs( (num / den) );
+		else 
+		{
+			mAudioThreadFilterCoefficients = new_coefficients;
+		}
 	}
 
 private:
@@ -142,8 +151,10 @@ private:
 		float b0;
 		float b1;
 		float b2;
-	} mFilterCoefficients;
+	};
 
+	FilterCoefficients mAudioThreadFilterCoefficients{};
+	FilterCoefficients mMainThreadFilterCoefficients{};
 	 double PI = std::atan( 1 ) * 4;
 	double mSampleRate = 0.0;
 

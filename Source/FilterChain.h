@@ -32,10 +32,15 @@ public:
 
 	void setParameters( float frequency, float resonance, float gain_in_db, BiquadFilter::FilterType type )
 	{
+		mFrequency = frequency;
+		mResonance = resonance;
+		mGainInDb = gain_in_db;
+		mFilterType = type;
 		for (auto& filter : mFilters)
 		{
-			filter.setParameters( frequency, resonance, gain_in_db, type );
+			filter.RecalculateCoefficients( true, mFrequency, mResonance, mGainInDb, mFilterType );
 		}
+		mRecalculateCoefficients.store( true );
 	}
 
 	void SetSampleRate( double sampleRate ) 
@@ -49,6 +54,14 @@ public:
 	
 	void process( juce::AudioBuffer<float>& buffer )
 	{
+		if (mRecalculateCoefficients.load())
+		{
+			for (auto& filter : mFilters)
+			{
+				filter.RecalculateCoefficients( false, mFrequency, mResonance, mGainInDb, mFilterType );
+			}
+			mRecalculateCoefficients.store( false );
+		}
 		for (auto& filter : mFilters)
 		{
 			filter.process( buffer );
@@ -69,4 +82,10 @@ public:
 private:
 	std::vector<BiquadFilter> mFilters;
 	double mSampleRate = 0.0;
+
+	std::atomic<bool> mRecalculateCoefficients{ false };
+	float mFrequency = 0.0f;
+	float mResonance = 0.0f;
+	float mGainInDb = 0.0f;
+	BiquadFilter::FilterType mFilterType = BiquadFilter::FilterType::LPF;
 };
