@@ -24,7 +24,6 @@ public:
 	
 	void process( juce::AudioBuffer<float>& buffer )
 	{
-
 		for ( int channel = 0; channel < buffer.getNumChannels(); ++channel )
 		{
 			auto* channel_ptr = buffer.getWritePointer( channel );
@@ -55,7 +54,6 @@ public:
 		return std::abs( (num / den) );
 	}
 
-	/// ONLY call from audio thread
 	void RecalculateCoefficients( bool main_thread, float frequency, float resonance, float gain_in_db, FilterType type)
 	{
 		FilterCoefficients new_coefficients;
@@ -153,6 +151,7 @@ private:
 		float b2;
 	};
 
+	// Two separate copies so the audio thread isn't blocked
 	FilterCoefficients mAudioThreadFilterCoefficients{};
 	FilterCoefficients mMainThreadFilterCoefficients{};
 	 double PI = std::atan( 1 ) * 4;

@@ -36,6 +36,7 @@ public:
 		mResonance = resonance;
 		mGainInDb = gain_in_db;
 		mFilterType = type;
+		// Even though the coefficients will be the same across filters they could be different in a later commit
 		for (auto& filter : mFilters)
 		{
 			filter.RecalculateCoefficients( true, mFrequency, mResonance, mGainInDb, mFilterType );
