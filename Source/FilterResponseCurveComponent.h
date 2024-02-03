@@ -9,7 +9,7 @@
 class FilterResponseCurveComponent : public juce::Component
 {
 public:
-	FilterResponseCurveComponent()
+	FilterResponseCurveComponent( )
 	{
 
 	}

@@ -201,7 +201,7 @@ ParametricEQAudioProcessor::CreateParameterLayout()
 		auto cutoff = std::make_unique<juce::AudioParameterFloat>( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"Cutoff Band " + std::to_string( index ),
 			FrequencyRange( 20.0f, 20000.0f, 0.25f ),
-			1000.0f );
+			juce::mapToLog10( static_cast<float>(index + 1) / (Constants::NUMBER_OF_BANDS + 1), 20.0f, 20000.0f ) );
 
 		auto resonance = std::make_unique<juce::AudioParameterFloat>( RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"Resonance Band " + std::to_string( index ),

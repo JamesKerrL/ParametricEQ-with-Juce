@@ -8,7 +8,11 @@ class BandMouseControlComponent : public juce::Component
 public:
 	BandMouseControlComponent()
 	{
+		setInterceptsMouseClicks( false, false );
+	}
 
+	~BandMouseControlComponent()
+	{
 	}
 
 	void paint( juce::Graphics& g ) override

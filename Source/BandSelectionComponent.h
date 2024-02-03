@@ -16,8 +16,10 @@ public:
 			auto local = std::make_unique<juce::TextButton>( band_name );
 			int index = i;
 			local->setClickingTogglesState( true );
-			local->setColour( juce::TextButton::buttonColourId, Constants::BAND_COLORS[i] );
-			local->setColour( juce::TextButton::buttonOnColourId, Constants::BAND_COLORS[i].darker( 0.85 ) );
+			local->setColour( juce::TextButton::textColourOffId, Constants::BAND_COLORS[i].darker( 0.3 ) );
+			//local->setHasFocusOutline( true );
+			local->setColour( juce::TextButton::buttonColourId, juce::Colours::black );
+			local->setColour( juce::TextButton::textColourOnId, Constants::BAND_COLORS[i].darker( 0.45 ) );
 			local->onClick = [&, index]()
 			{
 				mOnChangedFunction( index );

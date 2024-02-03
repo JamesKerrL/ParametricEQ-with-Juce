@@ -14,9 +14,10 @@
 ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQAudioProcessor& p )
 	: AudioProcessorEditor( &p ), audioProcessor( p )
 {
+	setInterceptsMouseClicks( false, true );
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
-	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.mFifo, audioProcessor.mSampleRate );
+	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.GlobalStateTree, audioProcessor.mFifo, audioProcessor.mSampleRate );
 
 	// Band selection
 	mBandSelector = std::make_unique<BandSelectionComponent>( Constants::NUMBER_OF_BANDS, 
@@ -75,8 +76,7 @@ ParametricEQAudioProcessorEditor::~ParametricEQAudioProcessorEditor()
 //==============================================================================
 void ParametricEQAudioProcessorEditor::paint( juce::Graphics& g )
 {
-	// (Our component is opaque, so we must completely fill the background with a solid colour)
-	g.fillAll( getLookAndFeel().findColour( juce::ResizableWindow::backgroundColourId ) );
+	g.fillAll( juce::Colours::black );
 
 	g.setColour( juce::Colours::white );
 }
@@ -105,3 +105,4 @@ void ParametricEQAudioProcessorEditor::SetVisibleIndex( int index_to_show )
 		}
 	}
 }
+

@@ -21,7 +21,6 @@ public:
 		{
 			mFilterUpdateCallback();
 		};
-		DBG( parameter->getDefaultValue() );
 		mFilterTypeComboBox.setSelectedItemIndex( parameter->convertFrom0to1( parameter->getDefaultValue() ) );
 
 		mSlopeComboBoxAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( mStateTree, FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mSlopeComboBox );

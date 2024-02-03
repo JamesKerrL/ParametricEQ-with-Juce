@@ -13,13 +13,20 @@
 class AnalysisComponent : public juce::Component
 {
 public:
-	AnalysisComponent( FifoBuffer& fifo_buffer, double sample_rate )
+	AnalysisComponent( juce::AudioProcessorValueTreeState& state_tree, FifoBuffer& fifo_buffer, double sample_rate )
 	{
 		mSpectrum = std::make_unique<SpectrumComponent>( fifo_buffer, sample_rate );
-		mFilterControlsView = std::make_unique<FilterControllersComponent>( Constants::NUMBER_OF_BANDS );
+		mFilterControlsView = std::make_unique<FilterControllersComponent>( state_tree, Constants::NUMBER_OF_BANDS );
 		addAndMakeVisible( *mSpectrum );
-		addAndMakeVisible( *mFilterControlsView );
 		addAndMakeVisible( mResponseCurveView );
+		addAndMakeVisible( *mFilterControlsView );
+
+		addMouseListener( mFilterControlsView.get(), false );
+	}
+
+	~AnalysisComponent( )
+	{
+		removeMouseListener( mFilterControlsView.get() );
 	}
 
 	void SetMagnitudes(std::vector<float>& magnitudes)
@@ -34,6 +41,13 @@ public:
 
 	void paint( juce::Graphics& g ) override
 	{
+		auto local_bounds = getLocalBounds();
+		auto view_bounds = juce::Rectangle<int>{ local_bounds.getX(), local_bounds.getY(), local_bounds.getWidth() - 30, local_bounds.getHeight() - 10 };
+		juce::Path path;
+		path.addRectangle( view_bounds );
+		juce::Colour color{ juce::Colours::white };
+		g.setColour( color.withAlpha( 0.7f ) );
+		g.strokePath( path, juce::PathStrokeType( 1.0f ) );
 		DrawFrequencyMarkers( g );
 		DrawDecibelMarkers( g );
 	}
