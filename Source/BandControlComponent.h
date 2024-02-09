@@ -37,10 +37,6 @@ public:
 		mFreqSlider.setSliderStyle( juce::Slider::SliderStyle::RotaryVerticalDrag );
 		mFreqSlider.setTextBoxStyle( juce::Slider::TextBoxBelow, true, 50, 20 );
 		mFreqAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mFreqSlider );
-		mFreqSlider.onValueChange = [&]()
-		{
-			mFilterUpdateCallback();
-		};
 
 		mFreqSlider.setColour( juce::Slider::ColourIds::rotarySliderFillColourId, juce::Colours::orange );
 		mFreqSlider.setColour( juce::Slider::ColourIds::thumbColourId, juce::Colours::transparentWhite );
@@ -51,7 +47,7 @@ public:
 		mResonanceAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mResonanceSlider );
 		mResonanceSlider.onValueChange = [&]()
 		{
-			mFilterUpdateCallback();
+			//mFilterUpdateCallback();
 		};
 		mResonanceSlider.setColour( juce::Slider::ColourIds::rotarySliderFillColourId, juce::Colours::orange );
 		mResonanceSlider.setColour( juce::Slider::ColourIds::thumbColourId, juce::Colours::transparentWhite );
@@ -61,7 +57,7 @@ public:
 		mGainAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, GAIN_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mGainSlider );
 		mGainSlider.onValueChange = [&]()
 		{
-			mFilterUpdateCallback();
+			//mFilterUpdateCallback();
 		};
 		mGainSlider.setColour( juce::Slider::ColourIds::rotarySliderFillColourId, juce::Colours::orange );
 		mGainSlider.setColour( juce::Slider::ColourIds::thumbColourId, juce::Colours::transparentWhite );

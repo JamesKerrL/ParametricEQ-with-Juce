@@ -17,7 +17,7 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 	setInterceptsMouseClicks( false, true );
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
-	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor.GlobalStateTree, audioProcessor.mFifo, audioProcessor.mSampleRate );
+	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor, audioProcessor.mFifo, audioProcessor.mSampleRate );
 
 	// Band selection
 	mBandSelector = std::make_unique<BandSelectionComponent>( Constants::NUMBER_OF_BANDS, 
@@ -45,28 +45,6 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 	addAndMakeVisible( *mAnalysisView );
 
 	setSize( 800, 350 );
-
-	std::function<void()> func = [&]()
-	{
-		if (mAnalysisView)
-		{
-			std::vector<float> magnitudes;
-			int analysis_area_width = mAnalysisView->getAnalysisAreaBounds().getWidth();
-			for (int i = 0; i < analysis_area_width; i++)
-			{
-				float frq = juce::mapToLog10( static_cast<double>(i) / static_cast<double>(analysis_area_width), 20.0, 20000.0 );
-				float value = 1.0f;
-				for (auto& filter : audioProcessor.mFilterBands)
-				{
-					value *= filter->getMagnitudeAtFrequency( frq );
-				}
-				magnitudes.push_back( juce::Decibels::gainToDecibels( value ) );
-			}
-			mAnalysisView->SetMagnitudes( magnitudes );
-		}
-	};
-	audioProcessor.setFilterCallback( func );
-	func();
 }
 
 ParametricEQAudioProcessorEditor::~ParametricEQAudioProcessorEditor()

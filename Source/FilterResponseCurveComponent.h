@@ -22,6 +22,10 @@ public:
 
 	void paint( juce::Graphics& g ) override
 	{
+		if (mMagnitudes.empty()) 
+		{
+			return;
+		}
 		float bot = static_cast<float>(getHeight());
 		float top = static_cast<float>(getY());
 

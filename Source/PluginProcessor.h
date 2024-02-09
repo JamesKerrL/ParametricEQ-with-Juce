@@ -66,21 +66,30 @@ public:
 	juce::AudioProcessorValueTreeState GlobalStateTree;
 	std::vector<std::unique_ptr<FilterChain>> mFilterBands = {};
 
-	void setFilterCallback( std::function<void()> filter_view_callback )
-	{
-		mFilterViewCallback = filter_view_callback;
-	}
-
 	void updateFilter( int index );
 
 	FifoBuffer mFifo;
 	double mSampleRate;
 
 private:
+
 	juce::AudioProcessorValueTreeState::ParameterLayout CreateParameterLayout();
 
+	class FilterUpdateListener : public juce::AudioProcessorValueTreeState::Listener
+	{
+	public:
+		explicit FilterUpdateListener( ParametricEQAudioProcessor& processor );
+		~FilterUpdateListener();
+		FilterUpdateListener( const FilterUpdateListener& ) = delete;
+
+		void parameterChanged( const juce::String& id, float newValue ) override;
+
+	private:
+		ParametricEQAudioProcessor& mProcessor;
+	};
+	FilterUpdateListener mListener;
+
 	juce::UndoManager mUndoManager;
-	std::function<void()> mFilterViewCallback = []() {};
 	BiquadFilter::FilterType ToEnum( float filter_type );
 
 	juce::AudioBuffer<float> mMonoBuffer;

@@ -9,29 +9,46 @@
 #include "SpectrumComponent.h"
 #include "FilterControllersComponent.h"
 #include "Constants.h"
+#include "PluginParameters.h"
 
-class AnalysisComponent : public juce::Component
+class AnalysisComponent : public juce::Component, public juce::AudioProcessorValueTreeState::Listener, public juce::Timer
 {
 public:
-	AnalysisComponent( juce::AudioProcessorValueTreeState& state_tree, FifoBuffer& fifo_buffer, double sample_rate )
+	AnalysisComponent( ParametricEQAudioProcessor& processor, FifoBuffer& fifo_buffer, double sample_rate ) : mProcessor( processor )
 	{
 		mSpectrum = std::make_unique<SpectrumComponent>( fifo_buffer, sample_rate );
-		mFilterControlsView = std::make_unique<FilterControllersComponent>( state_tree, Constants::NUMBER_OF_BANDS );
+		mFilterControlsView = std::make_unique<FilterControllersComponent>( mProcessor.GlobalStateTree, Constants::NUMBER_OF_BANDS );
 		addAndMakeVisible( *mSpectrum );
 		addAndMakeVisible( mResponseCurveView );
 		addAndMakeVisible( *mFilterControlsView );
 
 		addMouseListener( mFilterControlsView.get(), false );
+
+
+		for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+		{
+			mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetCutOffParameterId( i ), this );
+			mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetResonanceParameterId( i ), this );
+			mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetGainParameterId( i ), this );
+			mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetFilterTypeParameterId( i ), this );
+			mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetFilterSlopeParameterId( i ), this );
+		}
+
+		startTimerHz( 60 );
 	}
 
 	~AnalysisComponent( )
 	{
 		removeMouseListener( mFilterControlsView.get() );
-	}
 
-	void SetMagnitudes(std::vector<float>& magnitudes)
-	{
-		mResponseCurveView.SetMagnitudes( magnitudes );
+		for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+		{
+			mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetCutOffParameterId( i ), this );
+			mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetResonanceParameterId( i ), this );
+			mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetGainParameterId( i ), this );
+			mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetFilterTypeParameterId( i ), this );
+			mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetFilterSlopeParameterId( i ), this );
+		}
 	}
 
 	juce::Rectangle<int> getAnalysisAreaBounds()
@@ -97,13 +114,47 @@ public:
 		mSpectrum->setBounds( view_bounds );
 		mResponseCurveView.setBounds( view_bounds );
 		mFilterControlsView->setBounds( view_bounds );
+
+		UpdateMagnitudes();
+	}
+
+	void parameterChanged( const juce::String& id, float newValue )
+	{
+		mUpdateMagnitudes.store( true );
+	}
+
+	void UpdateMagnitudes()
+	{
+		std::vector<float> magnitudes;
+		int analysis_area_width = mResponseCurveView.getWidth();
+		for (int i = 0; i < analysis_area_width; i++)
+		{
+			float frq = juce::mapToLog10( static_cast<double>(i) / static_cast<double>(analysis_area_width), 20.0, 20000.0 );
+			float value = 1.0f;
+			for (auto& filter : mProcessor.mFilterBands)
+			{
+				value *= filter->getMagnitudeAtFrequency( frq );
+			}
+			magnitudes.push_back( juce::Decibels::gainToDecibels( value ) );
+		}
+		mResponseCurveView.SetMagnitudes( magnitudes );
+	}
+
+	void timerCallback() override
+	{
+		if (mUpdateMagnitudes.load())
+		{
+			UpdateMagnitudes();
+			mUpdateMagnitudes.store( false );
+		}
 	}
 
 private:
-	std::vector<float> mMagnitudes;
+	ParametricEQAudioProcessor& mProcessor;
 	FilterResponseCurveComponent mResponseCurveView;
 	std::unique_ptr<SpectrumComponent> mSpectrum;
 	std::unique_ptr<FilterControllersComponent> mFilterControlsView;
 	const double MAX_GAIN_IN_DB = 24.0;
 	const double MIN_GAIN_IN_DB = -24.0;
+	std::atomic<bool> mUpdateMagnitudes{ false };
 };

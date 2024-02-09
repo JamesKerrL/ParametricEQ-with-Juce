@@ -16,6 +16,8 @@ ParametricEQAudioProcessor::ParametricEQAudioProcessor()
 		.withInput( "Input", juce::AudioChannelSet::stereo(), true )
 		.withOutput( "Output", juce::AudioChannelSet::stereo(), true )
 	), GlobalStateTree( *this, &mUndoManager, "PARAMETERS", ParametricEQAudioProcessor::CreateParameterLayout() )
+	, mFifo( 2048 * 2 )
+	, mListener( *this )
 {
 	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
 	{
@@ -270,7 +272,6 @@ ParametricEQAudioProcessor::updateFilter( int index )
 
 	mFilterBands[index]->setFilterOrder( filter_order + 1 );
 	mFilterBands[index]->setParameters( cutoff, resonance, gain, ToEnum( filter_type ) );
-	mFilterViewCallback();
 }
 
 BiquadFilter::FilterType
@@ -301,4 +302,38 @@ ParametricEQAudioProcessor::ToEnum( float filter_type )
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
 	return new ParametricEQAudioProcessor();
+}
+
+
+ParametricEQAudioProcessor::FilterUpdateListener::FilterUpdateListener( ParametricEQAudioProcessor& processor ) : mProcessor( processor )
+{
+	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+	{
+		mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetCutOffParameterId( i ), this );
+		mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetResonanceParameterId( i ), this );
+		mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetGainParameterId( i ), this );
+		mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetFilterTypeParameterId( i ), this );
+		mProcessor.GlobalStateTree.addParameterListener( PluginParameters::GetFilterSlopeParameterId( i ), this );
+	}
+}
+
+ParametricEQAudioProcessor::FilterUpdateListener::~FilterUpdateListener()
+{
+	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+	{
+		mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetCutOffParameterId( i ), this );
+		mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetResonanceParameterId( i ), this );
+		mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetGainParameterId( i ), this );
+		mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetFilterTypeParameterId( i ), this );
+		mProcessor.GlobalStateTree.removeParameterListener( PluginParameters::GetFilterSlopeParameterId( i ), this );
+	}
+}
+
+void 
+ParametricEQAudioProcessor::FilterUpdateListener::parameterChanged( const juce::String& id, float newValue )
+{
+	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
+	{
+		mProcessor.updateFilter( i );
+	}
 }

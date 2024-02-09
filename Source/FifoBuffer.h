@@ -7,10 +7,10 @@
 class FifoBuffer
 {
 public:
-	FifoBuffer()
+	FifoBuffer( size_t buffer_size )
 	{
-		mAbstractFifo = std::make_unique< juce::AbstractFifo>( BUFFER_SIZE );
-		mStorage.ensureStorageAllocated( BUFFER_SIZE );
+		mAbstractFifo = std::make_unique< juce::AbstractFifo>( buffer_size );
+		mStorage.ensureStorageAllocated( buffer_size );
 		for (int index = 0; index < mStorage.size(); index++)
 		{
 			mStorage.set( index, 1.0f );
@@ -53,7 +53,6 @@ public:
 	}
 
 private:
-	static constexpr int BUFFER_SIZE = 2048 * 2;
 	std::unique_ptr<juce::AbstractFifo> mAbstractFifo;
 	juce::Array<float> mStorage;
 };
