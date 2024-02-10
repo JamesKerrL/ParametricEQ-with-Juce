@@ -18,7 +18,7 @@ public:
 			auto local = std::make_unique<juce::TextButton>( band_name );
 			local->setLookAndFeel( &mLook  );
 			int index = i;
-			local->setClickingTogglesState( true );
+			local->setClickingTogglesState( false );
 			local->setColour( juce::TextButton::textColourOffId, Constants::BAND_COLORS[i].darker( 0.3 ) );
 
 			local->setColour( juce::TextButton::buttonColourId, Constants::BAND_COLORS[i].withAlpha(0.0f) );
@@ -31,6 +31,7 @@ public:
 				selected_band_parameter->sendValueChangedMessageToListeners( norm_value ); // TODO don't want this notifying host
 				mOnChangedFunction( index );
 				TurnOffUnselectedButtons( index );
+				//mBandButtons[index]->setToggleState( true, juce::dontSendNotification );
 			};
 			mBandButtons.push_back( std::move( local ) );
 

@@ -123,7 +123,17 @@ public:
 
 	void parameterChanged( const juce::String& id, float newValue )
 	{
-		mUpdateMagnitudes.store( true );
+		if (juce::MessageManager::getInstance()->isThisTheMessageThread())
+		{
+			UpdateMagnitudes();
+			if (mSpectrum) {
+				mSpectrum->setSampleRate( mProcessor.mSampleRate.load() );
+			}
+		}
+		else
+		{
+			mUpdateMagnitudes.store( true );
+		}
 	}
 
 	void UpdateMagnitudes()

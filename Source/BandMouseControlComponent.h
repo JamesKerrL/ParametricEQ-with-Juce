@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include <cmath>
+#include "Constants.h"
 
 class BandMouseControlComponent : public juce::Component
 {

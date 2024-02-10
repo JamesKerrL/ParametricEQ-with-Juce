@@ -23,10 +23,9 @@ public:
 	void paint( juce::Graphics& g ) override
 	{
 		g.fillAll( juce::Colours::black );
-		std::vector<float> frequencies_of_interest = { 20, 30, 40, 60, 80, 100, 200, 300, 400, 600, 800, 1000, 2000, 3000, 4000, 6000, 8000, 10000, 20000 };
 		g.setColour( juce::Colours::white.withAlpha(0.1f) );
 		int idx = 0;
-		for (auto freq : frequencies_of_interest)
+		for (auto freq : Constants::FREQUENCIES_OF_INTEREST)
 		{
 			int x = std::round( juce::mapFromLog10( freq, 20.0f, 20000.0f ) * getWidth() );
 			g.fillRect( juce::Rectangle<int>{ x, 0, 1, getHeight() } );
@@ -53,7 +52,7 @@ public:
 
 	void timerCallback() override 
 	{
-		if (mFifoBuffer.getNumReady() + 1 >= Constants::FFT_SIZE && mSampleRate > 0) // TODO Fix
+		if (mFifoBuffer.getNumReady() + 1 >= Constants::FFT_SIZE && mSampleRate > 0) // TODO Fix the + 1
 		{
 			mFifoBuffer.ReadFrom( mInternalBuffer.data(), Constants::FFT_SIZE );
 
@@ -69,12 +68,11 @@ public:
 			}
 
 			juce::Path path;
-			int index = 0; // 0 index is dc
+			int index = 0; // 0 index is DC frequency
 			float frequency = 0;
-			//frequency = (index * mSampleRate) / Constants::FFT_SIZE;
 
 			float y0 = juce::jmap<float>( juce::Decibels::gainToDecibels( mRenderBuffer[1] / Constants::FFT_SIZE ), -78.0, 0.0, getBottom(), getY() );
-			path.startNewSubPath( 0, y0 * 1.2 );
+			path.startNewSubPath( 0, y0 * 1.2 ); // 1.2 is arbitrarily chosen to make a smooth line going from first frequency to off the sceen.
 
 			while (frequency < 20)
 			{

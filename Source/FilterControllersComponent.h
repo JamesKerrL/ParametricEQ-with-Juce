@@ -153,9 +153,10 @@ public:
 		gain_parameter->endChangeGesture();
 	}
 
+private:
 	void parameterChanged( const juce::String& id, float newValue ) override
 	{
-		juce::String index_string = id.substring( id.indexOf("_") + 1 );
+		juce::String index_string = id.substring( id.indexOf( "_" ) + 1 );
 		if (index_string.isEmpty())
 		{
 			return;
@@ -176,11 +177,10 @@ public:
 		}
 		else if (id.toStdString() == "selectedBand")
 		{
-			mCallQueue.callf( std::bind( &FilterControllersComponent::setSelectedBand, this, static_cast<int>( newValue ) ) );
+			mCallQueue.callf( std::bind( &FilterControllersComponent::setSelectedBand, this, static_cast<int>(newValue) ) );
 		}
 	}
 
-private:
 	void setXOfBandButton( int index, float new_frequency )
 	{
 		jassert( juce::MessageManager::getInstance()->isThisTheMessageThread() );

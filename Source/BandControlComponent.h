@@ -8,6 +8,7 @@
 #include "FilterResponseCurveComponent.h"
 #include "FilterTypeComboBoxLook.h"
 #include "FilterSlopeComboBoxLook.h"
+#include "PluginParameters.h"
 #include "Constants.h"
 
 class BandControlComponent : public juce::Component
@@ -20,8 +21,8 @@ public:
 		mFilterTypeComboBox.setJustificationType( juce::Justification::left );
 
 		juce::PopupMenu * menu = mFilterTypeComboBox.getRootMenu();
-		mComboBoxAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( mStateTree, FILTER_TYPE_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mFilterTypeComboBox );
-		auto* parameter = mStateTree.getParameter( FILTER_TYPE_PARAMETER_PREFIX + "_" + std::to_string( mIndex ) );
+		mComboBoxAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( mStateTree, PluginParameters::GetFilterTypeParameterId( mIndex ), mFilterTypeComboBox );
+		auto* parameter = mStateTree.getParameter( PluginParameters::GetFilterTypeParameterId( mIndex ) );
 		int id = 1;
 		for (auto value: parameter->getAllValueStrings())
 		{
@@ -34,16 +35,10 @@ public:
 			id++;
 		}
 
-		//mFilterTypeComboBox.addItemList( parameter->getAllValueStrings(), 1 );
-
-		//mFilterTypeComboBox.onChange = [&]()
-		//{
-		//	mFilterUpdateCallback();
-		//};
 		mFilterTypeComboBox.setSelectedItemIndex( parameter->convertFrom0to1( parameter->getDefaultValue() ) );
 
-		mSlopeComboBoxAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( mStateTree, FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mSlopeComboBox );
-		auto* parameter_slope = mStateTree.getParameter( (FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( mIndex )) );
+		mSlopeComboBoxAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( mStateTree, PluginParameters::GetFilterSlopeParameterId( mIndex ), mSlopeComboBox );
+		auto* parameter_slope = mStateTree.getParameter( (PluginParameters::GetFilterSlopeParameterId( mIndex )) );
 		mSlopeComboBox.addItemList( parameter_slope->getAllValueStrings(), 1 );
 
 		mSlopeComboBox.onChange = [&]()
@@ -57,23 +52,23 @@ public:
 		mFreqSlider.setTextValueSuffix( " Hz" );
 		mFreqSlider.setSliderStyle( juce::Slider::SliderStyle::RotaryVerticalDrag );
 		mFreqSlider.setTextBoxStyle( juce::Slider::TextBoxBelow, true, 70, 20 );
-		mFreqAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mFreqSlider );
+		mFreqAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, PluginParameters::GetCutOffParameterId( mIndex ), mFreqSlider );
 
 		mFreqSlider.setColour( juce::Slider::ColourIds::rotarySliderFillColourId, Constants::BAND_COLORS[mIndex] );
 		mFreqSlider.setColour( juce::Slider::ColourIds::thumbColourId, juce::Colours::transparentWhite );
 		mFreqSlider.setColour( juce::Slider::ColourIds::textBoxOutlineColourId, juce::Colours::transparentWhite );
-		mFreqSlider.setNumDecimalPlacesToDisplay( 0 );
+		//mFreqSlider.setNumDecimalPlacesToDisplay( 0 );
 
 		mResonanceSlider.setSliderStyle( juce::Slider::SliderStyle::RotaryVerticalDrag );
 		mResonanceSlider.setTextBoxStyle( juce::Slider::TextBoxBelow, true, 50, 20 );
-		mResonanceAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mResonanceSlider );
+		mResonanceAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, PluginParameters::GetResonanceParameterId( mIndex ), mResonanceSlider );
 		mResonanceSlider.setColour( juce::Slider::ColourIds::rotarySliderFillColourId, Constants::BAND_COLORS[mIndex] );
 		mResonanceSlider.setColour( juce::Slider::ColourIds::thumbColourId, juce::Colours::transparentWhite );
 		mResonanceSlider.setColour( juce::Slider::ColourIds::textBoxOutlineColourId, juce::Colours::transparentWhite );
 
 		mGainSlider.setSliderStyle( juce::Slider::SliderStyle::RotaryVerticalDrag );
 		mGainSlider.setTextBoxStyle( juce::Slider::TextBoxBelow, true, 70, 20 );
-		mGainAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, GAIN_PARAMETER_PREFIX + "_" + std::to_string( mIndex ), mGainSlider );
+		mGainAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>( mStateTree, PluginParameters::GetGainParameterId( mIndex ), mGainSlider );
 		mGainSlider.setColour( juce::Slider::ColourIds::rotarySliderFillColourId, Constants::BAND_COLORS[mIndex] );
 		mGainSlider.setColour( juce::Slider::ColourIds::thumbColourId, juce::Colours::transparentWhite );
 		mGainSlider.setColour( juce::Slider::ColourIds::textBoxOutlineColourId, juce::Colours::transparentWhite );
@@ -132,10 +127,4 @@ private:
 	std::function<void()> mFilterUpdateCallback;
 	juce::AudioProcessorValueTreeState& mStateTree;
 	int mIndex;
-
-	const std::string CUTOFF_PARAMETER_PREFIX = "cutoff";
-	const std::string RESONANCE_PARAMETER_PREFIX = "resonance";
-	const std::string GAIN_PARAMETER_PREFIX = "gain";
-	const std::string FILTER_TYPE_PARAMETER_PREFIX = "filterType";
-	const std::string FILTER_SLOPE_PARAMETER_PREFIX = "filterSlope";
 };
