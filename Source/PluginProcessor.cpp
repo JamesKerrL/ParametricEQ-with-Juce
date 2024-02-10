@@ -16,7 +16,7 @@ ParametricEQAudioProcessor::ParametricEQAudioProcessor()
 		.withInput( "Input", juce::AudioChannelSet::stereo(), true )
 		.withOutput( "Output", juce::AudioChannelSet::stereo(), true )
 	), GlobalStateTree( *this, &mUndoManager, "PARAMETERS", ParametricEQAudioProcessor::CreateParameterLayout() )
-	, mFifo( 2048 * 2 )
+	, mFifo( Constants::FFT_SIZE ) // TODO is this a good size?
 	, mListener( *this )
 {
 	for (int i = 0; i < Constants::NUMBER_OF_BANDS; i++)
@@ -95,7 +95,7 @@ void ParametricEQAudioProcessor::changeProgramName( int index, const juce::Strin
 //==============================================================================
 void ParametricEQAudioProcessor::prepareToPlay( double sampleRate, int samplesPerBlock )
 {
-	mSampleRate = sampleRate;
+	mSampleRate.store( sampleRate );
 	mMonoBuffer.setSize( 1, samplesPerBlock );
 	int index = 0;
 	for (auto& filter : mFilterBands)
@@ -208,7 +208,7 @@ ParametricEQAudioProcessor::CreateParameterLayout()
 		auto resonance = std::make_unique<juce::AudioParameterFloat>( RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"Resonance Band " + std::to_string( index ),
 			0.2,
-			8,
+			15,
 			0.707f );
 
 		auto gain = std::make_unique<juce::AudioParameterFloat>( GAIN_PARAMETER_PREFIX + "_" + std::to_string( index ),

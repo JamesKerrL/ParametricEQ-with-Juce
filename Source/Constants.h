@@ -26,6 +26,8 @@ namespace Constants
 		juce::Colour( 0xff69C199 )
 	};
 
+	constexpr int FFT_SIZE = 2048 * 2;
+	constexpr int FFT_ORDER = 12;
 	//static juce::Colour get_band_color_for_index( const int index )
 	//{
 	//	int wrapped_index = index % BAND_COLORS.size();

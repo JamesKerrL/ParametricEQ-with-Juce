@@ -17,7 +17,7 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 	setInterceptsMouseClicks( false, true );
 	// Make sure that before the constructor has finished, you've set the
 	// editor's size to whatever you need it to be.
-	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor, audioProcessor.mFifo, audioProcessor.mSampleRate );
+	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor, audioProcessor.mFifo, audioProcessor.mSampleRate.load() );
 
 	// Band selection
 	mBandSelector = std::make_unique<BandSelectionComponent>( audioProcessor, Constants::NUMBER_OF_BANDS,

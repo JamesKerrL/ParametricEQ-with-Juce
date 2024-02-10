@@ -69,7 +69,7 @@ public:
 	void updateFilter( int index );
 
 	FifoBuffer mFifo;
-	double mSampleRate;
+	std::atomic<double> mSampleRate{ 0 };
 
 private:
 

@@ -28,9 +28,7 @@ public:
 			juce::PopupMenu::Item item;
 			item.text = value;
 			item.setID( id );
-			juce::File file = juce::File::getCurrentWorkingDirectory().getChildFile( "../../Source/Images/lowpass-icon.svg" );
-			jassert( file.exists() );
-			auto drawable = juce::Drawable::createFromImageFile( file );
+			auto drawable = juce::Drawable::createFromImageData( BinaryData::lowpassicon_svg, BinaryData::lowpassicon_svgSize );
 			item.setImage( std::move( drawable ) );
 			menu->addItem( item );
 			id++;

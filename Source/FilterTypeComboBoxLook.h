@@ -16,11 +16,7 @@ public:
 		int 	buttonH,
 		juce::ComboBox& box ) override
 	{
-		//g.setColour( juce::Colours::yellow );
-		//g.fillAll();
-		juce::File file = juce::File::getCurrentWorkingDirectory().getChildFile( "../../Source/Images/lowpass-icon.svg" );
-		jassert( file.exists() );
-		auto drawable = juce::Drawable::createFromImageFile( file );
+		auto drawable = juce::Drawable::createFromImageData( BinaryData::lowpassicon_svg, BinaryData::lowpassicon_svgSize );
 		juce::Path path = drawable->getOutlineAsPath();
 		auto tr = path.getTransformToScaleToFit( juce::Rectangle<float>{ static_cast<float>( buttonX ), static_cast<float>( buttonY ), static_cast<float>( buttonW ), static_cast<float>( buttonH ) },
 												 true, juce::Justification::centred );

@@ -67,6 +67,9 @@ public:
 		g.strokePath( path, juce::PathStrokeType( 1.0f ) );
 		DrawFrequencyMarkers( g );
 		DrawDecibelMarkers( g );
+
+		//Draw lines
+		juce::Path path_background;
 	}
 
 	void DrawFrequencyMarkers( juce::Graphics& g )
@@ -86,7 +89,7 @@ public:
 			{
 				str << freq;
 			}
-			int x = juce::mapFromLog10( freq, 20.0f, 20000.0f ) * getWidth();
+			int x = std::round(juce::mapFromLog10( freq, 20.0f, 20000.0f ) * mSpectrum->getWidth());
 			g.drawFittedText( str, { x, getHeight() - 8 ,20,10 }, juce::Justification::centred, 1 );
 			idx++;
 		}
@@ -146,6 +149,9 @@ public:
 		{
 			UpdateMagnitudes();
 			mUpdateMagnitudes.store( false );
+		}
+		if (mSpectrum) {
+			mSpectrum->setSampleRate( mProcessor.mSampleRate.load() );
 		}
 	}
 
