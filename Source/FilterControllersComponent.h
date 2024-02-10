@@ -5,6 +5,7 @@
 #include "BandMouseControlComponent.h"
 #include "PluginParameters.h"
 #include "nonblocking_call_queue.h"
+#include "Constants.h"
 
 class FilterControllersComponent : public juce::Component, public juce::AudioProcessorValueTreeState::Listener, public juce::Timer
 {
@@ -14,14 +15,15 @@ public:
 	{
 		for (int i = 0; i < number_of_bands; i++)
 		{
-			auto local = std::make_unique<BandMouseControlComponent>();
+			auto local = std::make_unique<BandMouseControlComponent>( Constants::BAND_COLORS[i] );
 			mBandButtons.push_back( std::move( local ) );
 
 			addAndMakeVisible( *mBandButtons.back() );
 
-			const std::string CUTOFF_PARAMETER_PREFIX = "cutoff";
-			mStateTree.addParameterListener( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( i ), this );
+			mStateTree.addParameterListener( PluginParameters::GetCutOffParameterId( i ), this );
 			mStateTree.addParameterListener( PluginParameters::GetGainParameterId( i ), this );
+			mStateTree.addParameterListener( PluginParameters::GetResonanceParameterId( i ), this );
+			mStateTree.addParameterListener( "selectedBand", this );
 		}
 		startTimerHz( 60 );
 	}
@@ -29,9 +31,10 @@ public:
 	{
 		for (int i = 0; i < mNumberBands; i++)
 		{
-			const std::string CUTOFF_PARAMETER_PREFIX = "cutoff";
-			mStateTree.removeParameterListener( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( i ), this );
+			mStateTree.removeParameterListener( PluginParameters::GetCutOffParameterId( i ), this );
 			mStateTree.removeParameterListener( PluginParameters::GetGainParameterId( i ), this );
+			mStateTree.removeParameterListener( PluginParameters::GetResonanceParameterId( i ), this );
+			mStateTree.removeParameterListener( "selectedBand", this );
 		}
 	}
 
@@ -41,10 +44,9 @@ public:
 
 	void resized() override
 	{
-		const std::string CUTOFF_PARAMETER_PREFIX = "cutoff";
 		for (int index = 0; index < mNumberBands; index++)
 		{
-			auto cutoff_parameter = mStateTree.getRawParameterValue( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( index ) );
+			auto cutoff_parameter = mStateTree.getRawParameterValue( PluginParameters::GetCutOffParameterId( index ) );
 			float cutoff = cutoff_parameter->load();
 
 			float x = juce::mapFromLog10( cutoff, 20.0f, 20000.0f ) * getWidth();
@@ -63,6 +65,11 @@ public:
 			if (p->getLocalBounds().contains( pos ))
 			{
 				draggedindex = index;
+				auto selected_band_parameter = mStateTree.getParameter( "selectedBand" );
+				auto normalised_band = selected_band_parameter->convertTo0to1( draggedindex );
+				selected_band_parameter->beginChangeGesture();
+				selected_band_parameter->setValueNotifyingHost( normalised_band );
+				selected_band_parameter->endChangeGesture();
 				return;
 			}
 		}
@@ -85,6 +92,43 @@ public:
 
 	void mouseUp( const juce::MouseEvent& event ) override
 	{
+		draggedindex = -1;
+	}
+
+	void mouseWheelMove( const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override
+	{
+		if (draggedindex >= 0)
+		{
+			auto resonance_parameter = mStateTree.getParameter( PluginParameters::GetResonanceParameterId( draggedindex ) );
+			float resonance_value = mStateTree.getRawParameterValue( PluginParameters::GetResonanceParameterId( draggedindex ) )->load();
+			float denormalized_value = resonance_value + (wheel.deltaY * 1.5 );
+			float normalised_resonance = resonance_parameter->convertTo0to1( denormalized_value );
+
+			resonance_parameter->beginChangeGesture();
+			resonance_parameter->setValueNotifyingHost( normalised_resonance );
+			resonance_parameter->endChangeGesture();
+		}
+	}
+
+	void mouseDoubleClick( const juce::MouseEvent& event ) override
+	{
+		for (int index = 0; index < mNumberBands; index++)
+		{
+			auto pos = mBandButtons[index]->getLocalPoint( this, event.getPosition() );
+			auto* p = mBandButtons[index].get();
+			if (p->getLocalBounds().contains( pos ))
+			{
+				auto resonance_parameter = mStateTree.getParameter( PluginParameters::GetResonanceParameterId( index ) );
+				auto cutoff_parameter = mStateTree.getParameter( PluginParameters::GetCutOffParameterId( index ) );
+				auto gain_parameter = mStateTree.getParameter( PluginParameters::GetGainParameterId( index ) );
+				resonance_parameter->beginChangeGesture();
+				resonance_parameter->setValueNotifyingHost( resonance_parameter->getDefaultValue() );
+				cutoff_parameter->setValueNotifyingHost( cutoff_parameter->getDefaultValue() );
+				gain_parameter->setValueNotifyingHost( gain_parameter->getDefaultValue() );
+				resonance_parameter->endChangeGesture();
+				return;
+			}
+		}
 		draggedindex = -1;
 	}
 
@@ -126,8 +170,17 @@ public:
 		{
 			mCallQueue.callf( std::bind( &FilterControllersComponent::setYOfBandButton, this, index, newValue ) );
 		}
+		else if (id.toStdString() == PluginParameters::GetResonanceParameterId( index ))
+		{
+			mCallQueue.callf( std::bind( &FilterControllersComponent::setSizeOfBandButton, this, index, newValue ) );
+		}
+		else if (id.toStdString() == "selectedBand")
+		{
+			mCallQueue.callf( std::bind( &FilterControllersComponent::setSelectedBand, this, static_cast<int>( newValue ) ) );
+		}
 	}
 
+private:
 	void setXOfBandButton( int index, float new_frequency )
 	{
 		jassert( juce::MessageManager::getInstance()->isThisTheMessageThread() );
@@ -149,12 +202,43 @@ public:
 		mBandButtons[index]->setBounds( x, y - 15, 30, 30 );
 	}
 
+	void setSizeOfBandButton( int index, float new_resonance )
+	{
+		jassert( juce::MessageManager::getInstance()->isThisTheMessageThread() );
+		auto resonance_parameter = mStateTree.getParameter( PluginParameters::GetResonanceParameterId( index ) );
+		auto normalised_resonance = resonance_parameter->convertTo0to1( new_resonance );
+		mBandButtons[index]->setAlpha( normalised_resonance );
+	}
+
+	void setSelectedBand( int index )
+	{
+		jassert( juce::MessageManager::getInstance()->isThisTheMessageThread() );
+
+		for (int i = 0; i < mNumberBands; i++)
+		{
+			if (index == i)
+			{
+				mBandButtons[index]->setGlow( true );
+			}
+			else
+			{
+				mBandButtons[i]->setGlow( false );
+			}
+		}
+	}
+
 	void timerCallback() override
 	{
 		mCallQueue.synchronize();
 	}
 
-private:
+	float mapResonanceToPixels( int index, float resonance )
+	{
+		auto resonance_parameter = mStateTree.getParameter( PluginParameters::GetResonanceParameterId( index ) );
+		auto normalised_resonance = resonance_parameter->convertTo0to1( resonance );
+
+		return juce::jmap( normalised_resonance, 5.0f, 30.0f );
+	}
 	std::vector<std::unique_ptr<BandMouseControlComponent>> mBandButtons = {};
 	const int mNumberBands;
 	juce::AudioProcessorValueTreeState& mStateTree;

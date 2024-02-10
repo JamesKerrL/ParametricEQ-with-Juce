@@ -20,11 +20,9 @@ ParametricEQAudioProcessorEditor::ParametricEQAudioProcessorEditor( ParametricEQ
 	mAnalysisView = std::make_unique<AnalysisComponent>( audioProcessor, audioProcessor.mFifo, audioProcessor.mSampleRate );
 
 	// Band selection
-	mBandSelector = std::make_unique<BandSelectionComponent>( Constants::NUMBER_OF_BANDS, 
+	mBandSelector = std::make_unique<BandSelectionComponent>( audioProcessor, Constants::NUMBER_OF_BANDS,
 		[&]( int index )
 	{
-		auto selected_band_parameter = audioProcessor.GlobalStateTree.getRawParameterValue( "selectedBand" );
-		selected_band_parameter->store( index );
 		SetVisibleIndex( index );
 	} );
 
@@ -65,7 +63,7 @@ void ParametricEQAudioProcessorEditor::resized()
 	mBandSelector->setBounds( 10, mAnalysisView->getBottom() + 5, getWidth() - 20, 40 );
 	for (int band = 0; band < Constants::NUMBER_OF_BANDS; band++)
 	{
-		mBandControls[band]->setBounds( 10, mBandSelector->getBottom() + 5, getWidth() - 20, getHeight() - (mBandSelector->getBottom() +5) );
+		mBandControls[band]->setBounds( 10, mBandSelector->getBottom(), getWidth() - 20, getHeight() - (mBandSelector->getBottom()) - 7 );
 	}
 }
 
@@ -83,4 +81,3 @@ void ParametricEQAudioProcessorEditor::SetVisibleIndex( int index_to_show )
 		}
 	}
 }
-

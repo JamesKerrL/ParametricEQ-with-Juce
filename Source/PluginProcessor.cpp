@@ -202,13 +202,13 @@ ParametricEQAudioProcessor::CreateParameterLayout()
 	{
 		auto cutoff = std::make_unique<juce::AudioParameterFloat>( CUTOFF_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"Cutoff Band " + std::to_string( index ),
-			FrequencyRange( 20.0f, 20000.0f, 0.25f ),
+			FrequencyRange( 20.0f, 20000.0f, 1.f ),
 			juce::mapToLog10( static_cast<float>(index + 1) / (Constants::NUMBER_OF_BANDS + 1), 20.0f, 20000.0f ) );
 
 		auto resonance = std::make_unique<juce::AudioParameterFloat>( RESONANCE_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"Resonance Band " + std::to_string( index ),
 			0.2,
-			5,
+			8,
 			0.707f );
 
 		auto gain = std::make_unique<juce::AudioParameterFloat>( GAIN_PARAMETER_PREFIX + "_" + std::to_string( index ),
@@ -224,7 +224,7 @@ ParametricEQAudioProcessor::CreateParameterLayout()
 
 		auto filterSlope = std::make_unique<juce::AudioParameterChoice>( FILTER_SLOPE_PARAMETER_PREFIX + "_" + std::to_string( index ),
 			"FilterSlope Band " + std::to_string( index ),
-			juce::StringArray{ "12db/OCT", "24db/OCT", "36db/OCT", "48db/OCT" },
+			juce::StringArray{ "12db", "24db", "36db", "48db" },
 			0 );
 
 		layout.add( std::move( cutoff ) );

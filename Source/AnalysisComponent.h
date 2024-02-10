@@ -87,7 +87,7 @@ public:
 				str << freq;
 			}
 			int x = juce::mapFromLog10( freq, 20.0f, 20000.0f ) * getWidth();
-			g.drawFittedText( str, { x, getHeight() - 10 ,20,10 }, juce::Justification::centred, 1 );
+			g.drawFittedText( str, { x, getHeight() - 8 ,20,10 }, juce::Justification::centred, 1 );
 			idx++;
 		}
 	}
@@ -103,7 +103,7 @@ public:
 			double db = juce::jmap( static_cast<double>(db_marker) / step_number, MAX_GAIN_IN_DB, MIN_GAIN_IN_DB );
 			juce::String str;
 			str << db << " db";
-			g.drawFittedText( str, { getWidth() - 30,  step * db_marker , 20,10 }, juce::Justification::centred, 1 );
+			g.drawFittedText( str, { getWidth() - 28,  step * db_marker , 20,10 }, juce::Justification::centred, 1 );
 		}
 	}
 
