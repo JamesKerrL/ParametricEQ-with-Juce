@@ -7,7 +7,9 @@
               pluginManufacturer="HRL Audio" pluginChannelConfigs="{2, 2}">
   <MAINGROUP id="goSmkA" name="ParametricEQ">
     <GROUP id="{ABE15B1A-9784-193A-6BB1-2F8CD22AAC63}" name="Source">
-      <FILE id="sePqTw" name="lowpassicon.svg" compile="0" resource="1" file="Source/Images/lowpassicon.svg"/>
+      <FILE id="giABWj" name="lp.svg" compile="0" resource="1" file="Source/Images/lp.svg"/>
+      <FILE id="FDxsnc" name="hp.svg" compile="0" resource="1" file="Source/Images/hp.svg"/>
+      <FILE id="lMbhtM" name="notch.svg" compile="0" resource="1" file="Source/Images/notch.svg"/>
       <FILE id="V2GHlJ" name="BandSelectorButtonLook.h" compile="0" resource="0"
             file="Source/BandSelectorButtonLook.h"/>
       <FILE id="VZlfiU" name="PluginProcessor.cpp" compile="1" resource="0"
@@ -17,6 +19,7 @@
       <FILE id="POHw3u" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="E4ceEI" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="ord2vI" name="peak.svg" compile="0" resource="1" file="Source/Images/peak.svg"/>
       <FILE id="X4d1W7" name="AnalysisComponent.h" compile="0" resource="0"
             file="Source/AnalysisComponent.h"/>
       <FILE id="g2G6at" name="BandControlComponent.h" compile="0" resource="0"

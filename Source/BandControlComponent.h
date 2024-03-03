@@ -24,13 +24,14 @@ public:
 		mComboBoxAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>( mStateTree, PluginParameters::GetFilterTypeParameterId( mIndex ), mFilterTypeComboBox );
 		auto* parameter = mStateTree.getParameter( PluginParameters::GetFilterTypeParameterId( mIndex ) );
 		int id = 1;
+		auto images = mFilterTypeLook.GetImages();
 		for (auto value: parameter->getAllValueStrings())
 		{
+			jassert( id < (images.size() + 1) );
 			juce::PopupMenu::Item item;
 			item.text = value;
 			item.setID( id );
-			auto drawable = juce::Drawable::createFromImageData( BinaryData::lowpassicon_svg, BinaryData::lowpassicon_svgSize );
-			item.setImage( std::move( drawable ) );
+			item.setImage( juce::Drawable::createFromImageData( images[id].path.c_str(), images[id].size ) );
 			menu->addItem( item );
 			id++;
 		}
